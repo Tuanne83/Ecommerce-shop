@@ -1,0 +1,123 @@
+.profile-page {
+  padding: 40px 0;
+}
+
+.profile-page h1 {
+  font-size: 32px;
+  margin-bottom: 32px;
+}
+
+.profile-content {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.profile-section {
+  background: white;
+  padding: 32px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.profile-section h2 {
+  font-size: 24px;
+  margin-bottom: 20px;
+}
+
+.info-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.info-card p {
+  font-size: 16px;
+  color: var(--gray-700);
+}
+
+.balance {
+  color: var(--secondary);
+  font-weight: 600;
+  font-size: 18px;
+}
+
+.addresses-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.address-card {
+  background: var(--gray-50);
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid var(--gray-200);
+}
+
+.transactions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.transaction-card {
+  background: var(--gray-50);
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid var(--gray-200);
+}
+
+.transaction-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.transaction-type {
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.transaction-type.topup {
+  background: #dbeafe;
+  color: var(--primary);
+}
+
+.transaction-type.payment {
+  background: #fee2e2;
+  color: var(--danger);
+}
+
+.transaction-type.refund {
+  background: #d1fae5;
+  color: var(--secondary);
+}
+
+.transaction-amount {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.transaction-amount.positive {
+  color: var(--secondary);
+}
+
+.transaction-amount.negative {
+  color: var(--danger);
+}
+
+.transaction-desc {
+  color: var(--gray-600);
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.transaction-date {
+  color: var(--gray-500);
+  font-size: 12px;
+}
