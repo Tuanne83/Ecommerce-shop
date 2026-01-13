@@ -21,6 +21,9 @@ const AdminDashboard = () => {
   const [categories, setCategories] = useState([]);
   const [roles, setRoles] = useState([]);
   const [transactions, setTransactions] = useState([]);
+  
+  // Local state for balance editing
+  const [balanceInputs, setBalanceInputs] = useState({});
 
   useEffect(() => {
     if (!user || user.RoleName !== 'Admin') {
@@ -44,6 +47,12 @@ const AdminDashboard = () => {
         ]);
         setUsers(usersRes.data);
         setRoles(rolesRes.data);
+        // Initialize balance inputs with current balance values
+        const balanceMap = {};
+        usersRes.data.forEach(u => {
+          balanceMap[u.UserID] = u.Balance;
+        });
+        setBalanceInputs(balanceMap);
       } else if (activeTab === 'shops') {
         const res = await axios.get('/api/admin/shops');
         setShops(res.data);
@@ -78,13 +87,58 @@ const AdminDashboard = () => {
     }
   };
 
-  const updateUserBalance = async (userId, balance) => {
+  const handleBalanceChange = (userId, value) => {
+    setBalanceInputs(prev => ({
+      ...prev,
+      [userId]: value
+    }));
+  };
+
+  const updateUserBalance = async (userId) => {
+    const balance = balanceInputs[userId];
+    
+    // Validate balance
+    if (balance === undefined || balance === null || balance === '') {
+      alert('Vui lòng nhập số dư hợp lệ');
+      // Reset to original value
+      const user = users.find(u => u.UserID === userId);
+      if (user) {
+        setBalanceInputs(prev => ({
+          ...prev,
+          [userId]: user.Balance
+        }));
+      }
+      return;
+    }
+
+    const balanceNum = parseFloat(balance);
+    if (isNaN(balanceNum) || balanceNum < 0) {
+      alert('Số dư phải là số hợp lệ và không âm');
+      // Reset to original value
+      const user = users.find(u => u.UserID === userId);
+      if (user) {
+        setBalanceInputs(prev => ({
+          ...prev,
+          [userId]: user.Balance
+        }));
+      }
+      return;
+    }
+
     try {
-      await axios.put(`/api/admin/users/${userId}/balance`, { balance });
+      await axios.put(`/api/admin/users/${userId}/balance`, { balance: balanceNum });
       alert('Cập nhật số dư thành công!');
       fetchData();
     } catch (err) {
       alert(err.response?.data?.error || 'Lỗi khi cập nhật');
+      // Reset to original value on error
+      const user = users.find(u => u.UserID === userId);
+      if (user) {
+        setBalanceInputs(prev => ({
+          ...prev,
+          [userId]: user.Balance
+        }));
+      }
     }
   };
 
@@ -269,9 +323,16 @@ const AdminDashboard = () => {
                         <td>
                           <input
                             type="number"
-                            value={u.Balance}
-                            onChange={(e) => updateUserBalance(u.UserID, parseFloat(e.target.value))}
-                            onBlur={(e) => updateUserBalance(u.UserID, parseFloat(e.target.value))}
+                            step="0.01"
+                            min="0"
+                            value={balanceInputs[u.UserID] !== undefined ? balanceInputs[u.UserID] : u.Balance}
+                            onChange={(e) => handleBalanceChange(u.UserID, e.target.value)}
+                            onBlur={() => updateUserBalance(u.UserID)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.target.blur();
+                              }
+                            }}
                             style={{ width: '120px' }}
                           />
                         </td>

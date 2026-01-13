@@ -103,13 +103,59 @@ router.post('/create', authenticate, async (req, res) => {
 router.post('/:id/pay', authenticate, async (req, res) => {
   try {
     const pool = await getPool();
-    const request = pool.request();
-    request.input('OrderID', sql.Int, req.params.id);
+    const orderId = req.params.id;
     
-    await request.execute('sp_PayOrder');
+    // Kiểm tra order trước khi thanh toán
+    const checkRequest = pool.request();
+    checkRequest.input('OrderID', sql.Int, orderId);
+    checkRequest.input('UserID', sql.Int, req.user.userId);
+    
+    const orderCheck = await checkRequest.query(`
+      SELECT 
+        o.OrderID,
+        o.Status,
+        o.TotalAmount,
+        u.Balance
+      FROM Orders o
+      JOIN Users u ON o.UserID = u.UserID
+      WHERE o.OrderID = @OrderID AND o.UserID = @UserID
+    `);
+    
+    if (orderCheck.recordset.length === 0) {
+      return res.status(404).json({ error: 'Order không tồn tại' });
+    }
+    
+    const order = orderCheck.recordset[0];
+    
+    if (order.Status !== 'Pending') {
+      return res.status(400).json({ error: 'Chỉ Order đang Pending mới thanh toán được' });
+    }
+    
+    if (order.Balance < order.TotalAmount) {
+      return res.status(400).json({ error: 'Số dư không đủ để thanh toán' });
+    }
+    
+    // Gọi stored procedure
+    const payRequest = pool.request();
+    payRequest.input('OrderID', sql.Int, orderId);
+    
+    await payRequest.execute('sp_PayOrder');
+    
+    // Kiểm tra lại order status sau khi thanh toán
+    const verifyRequest = pool.request();
+    verifyRequest.input('OrderID', sql.Int, orderId);
+    const verifyResult = await verifyRequest.query(`
+      SELECT Status FROM Orders WHERE OrderID = @OrderID
+    `);
+    
+    if (verifyResult.recordset[0].Status !== 'Paid') {
+      return res.status(400).json({ error: 'Thanh toán thất bại. Vui lòng thử lại.' });
+    }
+    
     res.json({ message: 'Thanh toán thành công' });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    console.error('Pay order error:', err);
+    res.status(400).json({ error: err.message || 'Lỗi khi thanh toán' });
   }
 });
 
